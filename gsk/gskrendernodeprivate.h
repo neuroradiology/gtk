@@ -86,6 +86,10 @@ void gsk_render_node_update_world_matrix (GskRenderNode *node,
 void gsk_render_node_get_world_matrix (GskRenderNode     *node,
                                        graphene_matrix_t *mv);
 
+GskRenderNode *gsk_render_node_new (void);
+
+void gsk_render_node_clear (GskRenderNode *node);
+
 int gsk_render_node_get_size (GskRenderNode *root);
 
 G_END_DECLS

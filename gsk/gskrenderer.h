@@ -101,6 +101,9 @@ void                    gsk_renderer_render                     (GskRenderer    
                                                                  GskRenderNode           *root,
                                                                  GdkDrawingContext       *context);
 
+GDK_AVAILABLE_IN_3_22
+GskRenderNode *         gsk_renderer_create_render_node         (GskRenderer             *renderer);
+
 G_END_DECLS
 
 #endif /* __GSK_RENDERER_H__ */

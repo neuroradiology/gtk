@@ -144,9 +144,14 @@ gsk_render_node_finalize (GskRenderNode *self)
 {
   GskRenderNodeIter iter;
 
+  /* We need to drop the reference on each child
+   * before clearing the node
+   */
   gsk_render_node_iter_init (&iter, self);
   while (gsk_render_node_iter_next (&iter, NULL))
     gsk_render_node_iter_remove (&iter);
+
+  gsk_render_node_clear (self);
 
   g_type_free_instance ((GTypeInstance *) self);
 }
@@ -231,19 +236,47 @@ gsk_render_node_get_type (void)
   return gsk_render_node_type__volatile;
 }
 
-/**
+/*< private >
  * gsk_render_node_new:
  *
  * Creates a new #GskRenderNode, to be used with #GskRenderer.
  *
  * Returns: (transfer full): the newly created #GskRenderNode
- *
- * Since: 3.22
  */
 GskRenderNode *
 gsk_render_node_new (void)
 {
   return (GskRenderNode *) g_type_create_instance (GSK_TYPE_RENDER_NODE);
+}
+
+void
+gsk_render_node_clear (GskRenderNode *self)
+{
+  graphene_rect_init_from_rect (&self->bounds, graphene_rect_zero ());
+
+  graphene_matrix_init_identity (&self->transform);
+  graphene_matrix_init_identity (&self->child_transform);
+
+  self->opacity = 1.0;
+
+  self->is_mutable = TRUE;
+  self->opaque = FALSE;
+  self->hidden = FALSE;
+  self->needs_world_matrix_update = TRUE;
+
+  self->parent = NULL;
+  self->first_child = NULL;
+  self->last_child = NULL;
+  self->prev_sibling = NULL;
+  self->next_sibling = NULL;
+  self->n_children = 0;
+
+  self->age = 0;
+
+  g_free (self->name);
+  self->name = NULL;
+
+  g_clear_pointer (&self->surface, cairo_surface_destroy);
 }
 
 /**

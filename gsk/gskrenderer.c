@@ -72,6 +72,9 @@ typedef struct
 
   int scale_factor;
 
+  GPtrArray *render_nodes;
+  int last_render_node;
+
   gboolean is_realized : 1;
   gboolean auto_clear : 1;
   gboolean use_alpha : 1;
@@ -867,6 +870,11 @@ gsk_renderer_realize (GskRenderer *renderer)
     return TRUE;
 
   priv->is_realized = GSK_RENDERER_GET_CLASS (renderer)->realize (renderer);
+  if (priv->is_realized)
+    {
+      priv->render_nodes = g_ptr_array_new_with_free_func ((GDestroyNotify) gsk_render_node_unref);
+      priv->last_render_node = 0;
+    }
 
   return priv->is_realized;
 }
@@ -890,6 +898,9 @@ gsk_renderer_unrealize (GskRenderer *renderer)
     return;
 
   GSK_RENDERER_GET_CLASS (renderer)->unrealize (renderer);
+
+  g_clear_pointer (&priv->render_nodes, g_ptr_array_unref);
+  priv->last_render_node = 0;
 
   priv->is_realized = FALSE;
 }
@@ -930,6 +941,7 @@ gsk_renderer_render (GskRenderer       *renderer,
 
   g_clear_object (&priv->drawing_context);
   g_clear_pointer (&priv->root_node, gsk_render_node_unref);
+  priv->last_render_node = 0;
 }
 
 /**
@@ -1080,4 +1092,42 @@ gsk_renderer_get_for_display (GdkDisplay *display)
   g_assert (renderer_type != G_TYPE_INVALID);
 
   return g_object_new (renderer_type, "display", display, NULL);
+}
+
+/**
+ * gsk_renderer_create_render_node:
+ * @renderer: a #GskRenderer
+ *
+ * Creates a new #GskRenderNode.
+ *
+ * Returns: (transfer full): the newly created #GskRenderNode
+ *
+ * Since: 3.22
+ */
+GskRenderNode *
+gsk_renderer_create_render_node (GskRenderer *renderer)
+{
+  GskRendererPrivate *priv = gsk_renderer_get_instance_private (renderer);
+  GskRenderNode *res;
+
+  g_return_val_if_fail (GSK_IS_RENDERER (renderer), NULL);
+
+  if (priv->last_render_node < priv->render_nodes->len)
+    {
+      int idx = priv->last_render_node;
+
+      priv->last_render_node += 1;
+
+      res = g_ptr_array_index (priv->render_nodes, idx);
+      gsk_render_node_clear (res);
+    }
+  else
+    {
+      res = gsk_render_node_new ();
+      g_ptr_array_add (priv->render_nodes, res);
+
+      priv->last_render_node = priv->render_nodes->len - 1;
+    }
+
+  return gsk_render_node_ref (res);
 }
