@@ -33,8 +33,8 @@
 //TODO remove
 #include "gtkbutton.h"
 
-#define REVEALER_ANIMATION_TIME 250 //ms
-#define INVERT_ANIMATION_SPEED 1.2 //px/ms
+#define REVEALER_ANIMATION_TIME 0 //ms
+#define INVERT_ANIMATION_SPEED 0.2 //px/ms
 #define INVERT_ANIMATION_MAX_TIME 10000 //ms
 
 struct _GtkPathBarContainerPrivate
@@ -122,7 +122,8 @@ gtk_path_bar_container_get_property (GObject    *object,
 
 void
 gtk_path_bar_container_add (GtkPathBarContainer *self,
-                           GtkWidget           *widget)
+                            GtkWidget           *widget,
+                            gboolean             animate)
 {
   GtkPathBarContainer *children_box = GTK_PATH_BAR_CONTAINER (self);
   GtkWidget *revealer;
@@ -135,8 +136,16 @@ gtk_path_bar_container_add (GtkPathBarContainer *self,
                                     GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT);
   gtk_container_add (GTK_CONTAINER (revealer), widget);
   gtk_container_add (GTK_CONTAINER (priv->children_box), revealer);
-  gtk_revealer_set_transition_duration (GTK_REVEALER (revealer),
-                                        REVEALER_ANIMATION_TIME);
+  if (animate)
+    {
+      gtk_revealer_set_transition_duration (GTK_REVEALER (revealer),
+                                            REVEALER_ANIMATION_TIME);
+    }
+  else
+    {
+      gtk_revealer_set_transition_duration (GTK_REVEALER (revealer),
+                                            0);
+    }
   priv->children = g_list_append (priv->children, widget);
   gtk_widget_show_all (revealer);
 
@@ -184,7 +193,8 @@ unrevealed_really_remove_child (GObject    *widget,
 
 void
 gtk_path_bar_container_remove (GtkPathBarContainer *self,
-                               GtkWidget    *widget)
+                               GtkWidget           *widget,
+                               gboolean             animate)
 {
   GtkPathBarContainerPrivate *priv = gtk_path_bar_container_get_instance_private (self);
   GtkWidget *to_remove;
@@ -194,7 +204,11 @@ gtk_path_bar_container_remove (GtkPathBarContainer *self,
   else
     to_remove = widget;
 
-  priv->children_to_remove = g_list_append (priv->children_to_remove, to_remove);
+  if (animate)
+    priv->children_to_remove = g_list_append (priv->children_to_remove, to_remove);
+  else
+    really_remove_child (self, widget);
+
   priv->children = g_list_remove (priv->children, to_remove);
 
   gtk_widget_queue_resize (GTK_WIDGET (self));

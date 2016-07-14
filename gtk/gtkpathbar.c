@@ -428,7 +428,7 @@ fill_path_bar (GtkPathBar  *self,
 
       path_chunk = create_path_chunk (self, current_path->str, splitted_path[i],
                                       NULL, TRUE);
-      gtk_path_bar_container_add (GTK_PATH_BAR_CONTAINER (path_bar_container), path_chunk);
+      gtk_path_bar_container_add (GTK_PATH_BAR_CONTAINER (path_bar_container), path_chunk, FALSE);
     }
 
   g_string_free (current_path, TRUE);
@@ -514,7 +514,7 @@ update_path_bar (GtkPathBar  *self,
               if (i < g_strv_length (splitted_old_path))
                 continue;
 
-              gtk_path_bar_container_remove (GTK_PATH_BAR_CONTAINER (path_bar_container), l->data);
+              gtk_path_bar_container_remove (GTK_PATH_BAR_CONTAINER (path_bar_container), l->data, TRUE);
             }
         }
       /* Completely different path */
@@ -554,7 +554,7 @@ on_invert_animation_done (GtkPathBarContainer *container,
       gtk_widget_hide (tail_button);
       path_chunk = create_path_chunk (self, "/meeh", "The tail",
                                       NULL, TRUE);
-      gtk_path_bar_container_add (GTK_PATH_BAR_CONTAINER (container), path_chunk);
+      gtk_path_bar_container_add (GTK_PATH_BAR_CONTAINER (container), path_chunk, FALSE);
     }
 }
 
@@ -626,14 +626,14 @@ on_overflow_clicked (GtkButton *button,
   GList *last;
 
   get_path_bar_widgets (GTK_PATH_BAR (self), NULL, &overflow_button, &tail_button, &path_bar_container, TRUE);
-  if (!priv->inverted)
+  if (priv->inverted)
     {
       gtk_widget_show (overflow_button);
       gtk_widget_show (tail_button);
       children = gtk_path_bar_container_get_children (path_bar_container);
       last = g_list_last (children);
       if (last)
-        gtk_path_bar_container_remove (path_bar_container, last->data);
+        gtk_path_bar_container_remove (path_bar_container, last->data, FALSE);
     }
 
   gtk_path_bar_set_inverted (self, !gtk_path_bar_get_inverted (self));
@@ -1023,7 +1023,17 @@ gtk_path_bar_set_inverted (GtkPathBar *self,
 
   if (priv->inverted != inverted)
     {
+      GtkWidget *path_chunk;
+      GtkWidget *overflow_button;
+      GtkWidget *tail_button;
+      GtkWidget *path_bar_container;
+
       priv->inverted = inverted != FALSE;
+
+      g_print ("###### set inverted\n");
+
+      get_path_bar_widgets (GTK_PATH_BAR (self), &path_bar_container, &overflow_button, &tail_button, NULL, TRUE);
+
       gtk_path_bar_container_set_inverted (GTK_PATH_BAR_CONTAINER (priv->path_bar_container_1), inverted);
       gtk_path_bar_container_set_inverted (GTK_PATH_BAR_CONTAINER (priv->path_bar_container_2), inverted);
 

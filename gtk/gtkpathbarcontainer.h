@@ -91,11 +91,13 @@ GList             *gtk_path_bar_container_get_overflow_children  (GtkPathBarCont
 
 GDK_AVAILABLE_IN_3_20
 void              gtk_path_bar_container_add                     (GtkPathBarContainer      *self,
-                                                                  GtkWidget                *widget);
+                                                                  GtkWidget                *widget,
+                                                                  gboolean                  animate);
 
 GDK_AVAILABLE_IN_3_20
 void              gtk_path_bar_container_remove                  (GtkPathBarContainer      *self,
-                                                                  GtkWidget                *widget);
+                                                                  GtkWidget                *widget,
+                                                                  gboolean                  animate);
 
 GDK_AVAILABLE_IN_3_20
 void              gtk_path_bar_container_remove_all_children     (GtkPathBarContainer      *self);
